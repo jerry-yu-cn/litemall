@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -15,42 +16,36 @@ public class LitemallIssueService {
     @Resource
     private LitemallIssueMapper issueMapper;
 
-    public List<LitemallIssue> query() {
-        LitemallIssueExample example = new LitemallIssueExample();
-        return issueMapper.selectByExample(example);
+    public void deleteById(Integer id) {
+        issueMapper.logicalDeleteByPrimaryKey(id);
     }
 
-    public int deleteById(Integer id) {
-        return issueMapper.deleteByPrimaryKey(id);
+    public void add(LitemallIssue issue) {
+        issue.setAddTime(LocalDateTime.now());
+        issue.setUpdateTime(LocalDateTime.now());
+        issueMapper.insertSelective(issue);
     }
 
-    public void add(LitemallIssue searchHistory) {
-        issueMapper.insertSelective(searchHistory);
-    }
-
-    public List<LitemallIssue> querySelective(String question, Integer page, Integer size, String sort, String order) {
+    public List<LitemallIssue> querySelective(String question, Integer page, Integer limit, String sort, String order) {
         LitemallIssueExample example = new LitemallIssueExample();
         LitemallIssueExample.Criteria criteria = example.createCriteria();
 
-        if(!StringUtils.isEmpty(question)){
-            criteria.andQuestionLike("%" + question + "%" );
+        if (!StringUtils.isEmpty(question)) {
+            criteria.andQuestionLike("%" + question + "%");
         }
-        PageHelper.startPage(page, size);
+        criteria.andDeletedEqualTo(false);
+
+        if (!StringUtils.isEmpty(sort) && !StringUtils.isEmpty(order)) {
+            example.setOrderByClause(sort + " " + order);
+        }
+
+        PageHelper.startPage(page, limit);
         return issueMapper.selectByExample(example);
     }
 
-    public int countSelective(String question, Integer page, Integer size, String sort, String order) {
-        LitemallIssueExample example = new LitemallIssueExample();
-        LitemallIssueExample.Criteria criteria = example.createCriteria();
-
-        if(!StringUtils.isEmpty(question)){
-            criteria.andQuestionLike("%" + question + "%" );
-        }
-        return (int)issueMapper.countByExample(example);
-    }
-
-    public void updateById(LitemallIssue collect) {
-        issueMapper.updateByPrimaryKeySelective(collect);
+    public int updateById(LitemallIssue issue) {
+        issue.setUpdateTime(LocalDateTime.now());
+        return issueMapper.updateByPrimaryKeySelective(issue);
     }
 
     public LitemallIssue findById(Integer id) {

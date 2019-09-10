@@ -1,4 +1,5 @@
 var api = require('../config/api.js');
+var app = getApp();
 
 function formatTime(date) {
   var year = date.getFullYear()
@@ -22,7 +23,7 @@ function formatNumber(n) {
  * 封封微信的的request
  */
 function request(url, data = {}, method = "GET") {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     wx.request({
       url: url,
       data: data,
@@ -31,12 +32,19 @@ function request(url, data = {}, method = "GET") {
         'Content-Type': 'application/json',
         'X-Litemall-Token': wx.getStorageSync('token')
       },
-      success: function (res) {
+      success: function(res) {
 
         if (res.statusCode == 200) {
 
-          if (res.data.errno == 401) {
-            //需要登录后才可以操作
+          if (res.data.errno == 501) {
+            // 清除登录相关内容
+            try {
+              wx.removeStorageSync('userInfo');
+              wx.removeStorageSync('token');
+            } catch (e) {
+              // Do something when catch error
+            }
+            // 切换到登录页面
             wx.navigateTo({
               url: '/pages/auth/login/login'
             });
@@ -48,7 +56,7 @@ function request(url, data = {}, method = "GET") {
         }
 
       },
-      fail: function (err) {
+      fail: function(err) {
         reject(err)
       }
     })
@@ -83,5 +91,3 @@ module.exports = {
   redirect,
   showErrorToast
 }
-
-
